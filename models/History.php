@@ -2,6 +2,8 @@
 
 namespace app\models;
 
+use app\models\events\Factory;
+use app\models\events\IEvent;
 use app\models\traits\ObjectNameTrait;
 use Yii;
 use yii\db\ActiveQuery;
@@ -48,6 +50,8 @@ class History extends ActiveRecord
 
     const EVENT_CUSTOMER_CHANGE_TYPE = 'customer_change_type';
     const EVENT_CUSTOMER_CHANGE_QUALITY = 'customer_change_quality';
+
+    private $eventExample;
 
     /**
      * @inheritdoc
@@ -108,48 +112,6 @@ class History extends ActiveRecord
     }
 
     /**
-     * @return array
-     */
-    public static function getEventTexts()
-    {
-        return [
-            self::EVENT_CREATED_TASK => Yii::t('app', 'Task created'),
-            self::EVENT_UPDATED_TASK => Yii::t('app', 'Task updated'),
-            self::EVENT_COMPLETED_TASK => Yii::t('app', 'Task completed'),
-
-            self::EVENT_INCOMING_SMS => Yii::t('app', 'Incoming message'),
-            self::EVENT_OUTGOING_SMS => Yii::t('app', 'Outgoing message'),
-
-            self::EVENT_CUSTOMER_CHANGE_TYPE => Yii::t('app', 'Type changed'),
-            self::EVENT_CUSTOMER_CHANGE_QUALITY => Yii::t('app', 'Property changed'),
-
-            self::EVENT_OUTGOING_CALL => Yii::t('app', 'Outgoing call'),
-            self::EVENT_INCOMING_CALL => Yii::t('app', 'Incoming call'),
-
-            self::EVENT_INCOMING_FAX => Yii::t('app', 'Incoming fax'),
-            self::EVENT_OUTGOING_FAX => Yii::t('app', 'Outgoing fax'),
-        ];
-    }
-
-    /**
-     * @param $event
-     * @return mixed
-     */
-    public static function getEventTextByEvent($event)
-    {
-        return static::getEventTexts()[$event] ?? $event;
-    }
-
-    /**
-     * @return mixed|string
-     */
-    public function getEventText()
-    {
-        return static::getEventTextByEvent($this->event);
-    }
-
-
-    /**
      * @param $attribute
      * @return null
      */
@@ -187,5 +149,13 @@ class History extends ActiveRecord
     {
         $detail = json_decode($this->detail);
         return isset($detail->data->{$attribute}) ? $detail->data->{$attribute} : null;
+    }
+
+    public function getEventExample(): IEvent
+    {
+        if (empty($eventState)) {
+            $this->eventExample = Factory::createByEvent($this);
+        }
+        return $this->eventExample;
     }
 }
